@@ -1,0 +1,14 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #111;
+  color: white;
+}
+
+main {
+  padding: 4rem;
+}
+
+h1 {
+  font-size: 4rem;
+}

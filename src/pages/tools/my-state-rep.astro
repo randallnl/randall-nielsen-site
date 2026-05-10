@@ -1,0 +1,328 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const API_BASE = import.meta.env.PUBLIC_API_BASE || "https://api.nhdeservesbetter.com";
+---
+
+<BaseLayout
+  title="My State Rep | NH Deserves Better"
+  description="Find your New Hampshire representatives and understand how they are voting."
+>
+  <section class="rep-tool">
+    <div class="container">
+      <p class="eyebrow">My State Rep</p>
+
+      <h1>Find out who represents you.</h1>
+
+      <p class="intro">
+        Enter your address to find your New Hampshire representatives, see key votes,
+        and get clear ways to take action.
+      </p>
+
+      <form id="rep-form" class="lookup-card card">
+        <label for="address">Your address</label>
+
+        <div class="form-row">
+          <input
+            id="address"
+            name="address"
+            type="text"
+            placeholder="123 Main St, Manchester, NH"
+            required
+          />
+
+          <button type="submit">Find My Reps</button>
+        </div>
+
+        <p class="help-text">
+          Your address is only used to look up your representatives.
+        </p>
+      </form>
+
+      <div id="status" class="status-message" aria-live="polite"></div>
+
+      <section id="results" class="results" hidden>
+        <h2>Your Representatives</h2>
+        <div id="rep-list" class="rep-grid"></div>
+      </section>
+    </div>
+  </section>
+
+  <script define:vars={{ API_BASE }}>
+    const form = document.querySelector("#rep-form");
+    const addressInput = document.querySelector("#address");
+    const statusEl = document.querySelector("#status");
+    const resultsEl = document.querySelector("#results");
+    const repListEl = document.querySelector("#rep-list");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const address = addressInput.value.trim();
+
+      if (!address) {
+        statusEl.textContent = "Please enter an address.";
+        return;
+      }
+
+      statusEl.textContent = "Looking up your representatives...";
+      resultsEl.hidden = true;
+      repListEl.innerHTML = "";
+
+      try {
+        const response = await fetch(
+          `${API_BASE}/reps/lookup?address=${encodeURIComponent(address)}`
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Something went wrong.");
+        }
+
+        if (!data.representatives || data.representatives.length === 0) {
+          statusEl.textContent = "No representatives found for that address.";
+          return;
+        }
+
+        statusEl.textContent = "";
+        resultsEl.hidden = false;
+
+        repListEl.innerHTML = data.representatives
+          .map((rep) => {
+            return `
+              <article class="rep-card card">
+                <div class="rep-header">
+                  ${
+                    rep.photo
+                      ? `<img src="${rep.photo}" alt="${rep.name}" />`
+                      : `<div class="photo-placeholder">NH</div>`
+                  }
+
+                  <div>
+                    <h3>${rep.name}</h3>
+                    <p>${rep.role}</p>
+                  </div>
+                </div>
+
+                <dl>
+                  <div>
+                    <dt>District</dt>
+                    <dd>${rep.district || "Not available"}</dd>
+                  </div>
+
+                  <div>
+                    <dt>Party</dt>
+                    <dd>${rep.party || "Not available"}</dd>
+                  </div>
+
+                  <div>
+                    <dt>Email</dt>
+                    <dd>
+                      ${
+                        rep.email
+                          ? `<a href="mailto:${rep.email}">${rep.email}</a>`
+                          : "Not available"
+                      }
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>Phone</dt>
+                    <dd>
+                      ${
+                        rep.phone
+                          ? `<a href="tel:${rep.phone}">${rep.phone}</a>`
+                          : "Not available"
+                      }
+                    </dd>
+                  </div>
+                </dl>
+
+                ${
+                  rep.score
+                    ? `<div class="score">Accountability Score: ${rep.score}</div>`
+                    : ""
+                }
+
+                ${
+                  rep.url
+                    ? `<a class="rep-link" href="${rep.url}" target="_blank" rel="noopener">View official page →</a>`
+                    : ""
+                }
+              </article>
+            `;
+          })
+          .join("");
+      } catch (error) {
+        statusEl.textContent = error.message || "Unable to look up representatives.";
+      }
+    });
+  </script>
+</BaseLayout>
+
+<style>
+  .rep-tool {
+    padding: 5rem 0;
+  }
+
+  .eyebrow {
+    color: var(--accent);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  h1 {
+    font-size: clamp(2.7rem, 7vw, 5.5rem);
+    line-height: 0.95;
+    margin: 0 0 1rem;
+    max-width: 900px;
+  }
+
+  .intro {
+    color: var(--muted);
+    font-size: 1.2rem;
+    max-width: 720px;
+  }
+
+  .lookup-card {
+    margin-top: 2rem;
+  }
+
+  label {
+    display: block;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+  }
+
+  input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.9rem 1rem;
+    font: inherit;
+  }
+
+  button {
+    border: 0;
+    border-radius: 999px;
+    padding: 0.9rem 1.25rem;
+    background: var(--accent);
+    color: white;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: var(--accent-dark);
+  }
+
+  .help-text {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 0;
+  }
+
+  .status-message {
+    margin-top: 1.5rem;
+    font-weight: 800;
+  }
+
+  .results {
+    margin-top: 3rem;
+  }
+
+  .rep-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .rep-card {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .rep-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .rep-header img,
+  .photo-placeholder {
+    width: 72px;
+    height: 72px;
+    border-radius: 999px;
+    object-fit: cover;
+    background: var(--accent);
+    color: white;
+    display: grid;
+    place-items: center;
+    font-weight: 900;
+  }
+
+  .rep-header h3 {
+    margin: 0;
+    font-size: 1.35rem;
+  }
+
+  .rep-header p {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  dl {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+  }
+
+  dl div {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 1rem;
+  }
+
+  dt {
+    color: var(--muted);
+    font-weight: 800;
+  }
+
+  dd {
+    margin: 0;
+  }
+
+  .score {
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 999px;
+    padding: 0.4rem 0.75rem;
+    font-weight: 900;
+    width: fit-content;
+  }
+
+  .rep-link {
+    font-weight: 900;
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  @media (max-width: 800px) {
+    .rep-grid,
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+
+    button {
+      width: 100%;
+    }
+  }
+</style>

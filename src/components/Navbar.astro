@@ -1,0 +1,60 @@
+<header class="site-header">
+  <div class="container nav-wrap">
+    <a class="logo" href="/">Your Site</a>
+
+    <nav aria-label="Main navigation">
+      <a href="/about">About</a>
+      <a href="/events">Events</a>
+      <a href="/tools">Tools</a>
+      <a href="/contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    background: rgba(251, 247, 240, 0.92);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+  }
+
+  .nav-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0;
+    gap: 1rem;
+  }
+
+  .logo {
+    font-weight: 900;
+    text-decoration: none;
+    font-size: 1.1rem;
+  }
+
+  nav {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  nav a {
+    text-decoration: none;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  nav a:hover {
+    color: var(--text);
+  }
+
+  @media (max-width: 640px) {
+    .nav-wrap {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+</style>

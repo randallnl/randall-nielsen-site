@@ -20,14 +20,14 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE || "https://api.nhdeservesbette
       </p>
 
       <form id="rep-form" class="lookup-card card">
-        <label for="address">Your address</label>
+        <label for="address">Your Town/City</label>
 
         <div class="form-row">
           <input
             id="address"
             name="address"
             type="text"
-            placeholder="123 Main St, Manchester, NH"
+            placeholder="<Manchester>"
             required
           />
 
@@ -71,7 +71,7 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE || "https://api.nhdeservesbette
 
       try {
         const response = await fetch(
-          `${API_BASE}/reps/lookup?address=${encodeURIComponent(address)}`
+          `${API_BASE}/reps/lookup?town=${encodeURIComponent(address)}`
         );
 
         const data = await response.json();

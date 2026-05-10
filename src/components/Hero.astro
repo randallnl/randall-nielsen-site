@@ -1,0 +1,91 @@
+---
+const {
+  title,
+  description,
+  buttonText,
+  buttonLink
+} = Astro.props;
+---
+
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <p class="eyebrow">New Hampshire Deserves Better</p>
+
+      <h1>{title}</h1>
+
+      <p class="description">
+        {description}
+      </p>
+
+      <a class="button" href={buttonLink}>
+        {buttonText}
+      </a>
+    </div>
+
+    <div class="hero-panel card">
+      <h2>Take Action</h2>
+
+      <ul>
+        <li>Find your representatives</li>
+        <li>Track important legislation</li>
+        <li>Understand how officials are voting</li>
+        <li>Connect with organizing opportunities</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    padding: 6rem 0;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.4fr .9fr;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  .eyebrow {
+    text-transform: uppercase;
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: .08em;
+  }
+
+  h1 {
+    font-size: clamp(3rem, 8vw, 6rem);
+    line-height: .95;
+    margin: 0 0 1rem;
+  }
+
+  .description {
+    font-size: 1.2rem;
+    color: var(--muted);
+    max-width: 60ch;
+  }
+
+  .hero-panel h2 {
+    margin-top: 0;
+  }
+
+  ul {
+    padding-left: 1.2rem;
+  }
+
+  li + li {
+    margin-top: .75rem;
+  }
+
+  @media (max-width: 900px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .hero {
+      padding: 4rem 0;
+    }
+  }
+</style>

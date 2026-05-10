@@ -1,0 +1,105 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const API_BASE = import.meta.env.PUBLIC_API_BASE;
+
+let tools = [];
+
+try {
+  const response = await fetch(`${API_BASE}/tools`);
+  tools = await response.json();
+} catch (error) {
+  tools = [];
+}
+---
+
+<BaseLayout
+  title="Tools | NH Deserves Better"
+  description="Civic tools for understanding representation, legislation, and accountability in New Hampshire."
+>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Tools</p>
+      <h1>Take action with better information.</h1>
+      <p class="intro">
+        These tools are built to make New Hampshire’s civic systems easier to understand, navigate, and act on.
+      </p>
+
+      <div class="tool-grid">
+        {tools.map((tool) => (
+          <a class="card tool-card" href={tool.url}>
+            <span class={`status ${tool.status}`}>{tool.status}</span>
+            <h2>{tool.title}</h2>
+            <p>{tool.description}</p>
+            <strong>Open tool →</strong>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .eyebrow {
+    color: var(--accent);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    line-height: 1;
+    margin: 0;
+  }
+
+  .intro {
+    color: var(--muted);
+    max-width: 65ch;
+    font-size: 1.15rem;
+  }
+
+  .tool-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .tool-card {
+    text-decoration: none;
+    transition: 0.2s ease;
+  }
+
+  .tool-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+  }
+
+  .status {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    background: #eee;
+    color: var(--muted);
+  }
+
+  .status.active {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .status.planned {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  @media (max-width: 900px) {
+    .tool-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

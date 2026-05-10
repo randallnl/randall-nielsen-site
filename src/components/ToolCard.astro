@@ -1,0 +1,41 @@
+---
+const {
+  title,
+  description,
+  link
+} = Astro.props;
+---
+
+<a class="tool-card card" href={link}>
+  <h3>{title}</h3>
+
+  <p>{description}</p>
+
+  <span>Open Tool →</span>
+</a>
+
+<style>
+  .tool-card {
+    display: block;
+    text-decoration: none;
+    transition: .2s ease;
+  }
+
+  .tool-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+  }
+
+  h3 {
+    margin-top: 0;
+  }
+
+  p {
+    color: var(--muted);
+  }
+
+  span {
+    font-weight: 700;
+    color: var(--accent);
+  }
+</style>

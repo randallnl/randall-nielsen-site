@@ -1,104 +1,62 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import Hero from "../components/Hero.astro";
+import ToolCard from "../components/ToolCard.astro";
 ---
 
 <BaseLayout
-  title="Home | Your Site"
-  description="A clean starter homepage built with Astro and Cloudflare."
+  title="NH Deserves Better"
+  description="Tools and resources for civic engagement and accountability in New Hampshire."
 >
-  <section class="hero">
-    <div class="container hero-grid">
-      <div>
-        <p class="eyebrow">Randall Nielsen is here to win.</p>
-        <h1>Build a website that can grow with your work.</h1>
-        <p class="intro">
-          This starter layout gives you a clean foundation for pages, events,
-          tools, resources, campaigns, and future Cloudflare-powered apps.
-        </p>
-        <a class="button" href="/about">Learn more</a>
-      </div>
 
-      <div class="hero-card card">
-        <h2>Starter structure</h2>
-        <ul>
-          <li>Reusable layout</li>
-          <li>Shared navigation</li>
-          <li>Global styling</li>
-          <li>Mobile-friendly sections</li>
-        </ul>
-      </div>
+<Hero
+  title="Civic engagement should be accessible."
+  description="Track legislation, understand how representatives are voting, connect with organizing opportunities, and take meaningful action in your community."
+  buttonText="Find Your Representatives"
+  buttonLink="/tools/my-state-rep"
+/>
+
+  <div class="container">
+
+    <h2>Featured Tools</h2>
+
+    <div class="tool-grid">
+
+      <ToolCard
+        title="My State Rep"
+        description="Find your representatives and understand how they’re voting."
+        link="/tools/my-state-rep"
+      />
+
+      <ToolCard
+        title="Bill Tracker"
+        description="Track important legislation and community testimony."
+        link="/tools/bill-tracker"
+      />
+
+      <ToolCard
+        title="Accountability"
+        description="Explore voting records and legislative accountability."
+        link="/tools/accountability"
+      />
+
     </div>
-  </section>
 
-  <section class="section">
-    <div class="container feature-grid">
-      <article class="card">
-        <h2>Pages</h2>
-        <p>Create simple pages for your organization, projects, campaigns, and resources.</p>
-      </article>
-
-      <article class="card">
-        <h2>Tools</h2>
-        <p>Add interactive tools later using Cloudflare Workers and APIs.</p>
-      </article>
-
-      <article class="card">
-        <h2>Events</h2>
-        <p>Build event pages that are easy to update and share.</p>
-      </article>
-    </div>
-  </section>
-</BaseLayout>
+  </div>
+</section>
 
 <style>
-  .hero {
-    padding: 5rem 0;
-  }
-
-  .hero-grid {
-    display: grid;
-    grid-template-columns: 1.4fr 0.8fr;
-    gap: 2rem;
-    align-items: center;
-  }
-
-  .eyebrow {
-    color: var(--accent);
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  h1 {
-    font-size: clamp(2.5rem, 7vw, 5.5rem);
-    line-height: 0.95;
-    margin: 0 0 1rem;
-  }
-
-  .intro {
-    color: var(--muted);
-    font-size: 1.2rem;
-    max-width: 62ch;
-  }
-
-  .hero-card h2 {
-    margin-top: 0;
-  }
-
-  .feature-grid {
+  .tool-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
   }
 
-  @media (max-width: 800px) {
-    .hero-grid,
-    .feature-grid {
+  @media (max-width: 900px) {
+    .tool-grid {
       grid-template-columns: 1fr;
-    }
-
-    .hero {
-      padding: 3rem 0;
     }
   }
 </style>
+
+</BaseLayout>

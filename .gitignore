@@ -25,3 +25,9 @@ pnpm-debug.log*
 
 .env.local
 scripts/data/*.csv
+scripts/d1_exports/*.sql
+scripts/d1_exports/*.sql
+scripts/d1_exports/*.sql
+scripts/d1_exports/*.sql
+scripts/d1_exports/*.sql
+scripts/d1_exports/*.sql

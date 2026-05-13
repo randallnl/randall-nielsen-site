@@ -15,19 +15,19 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE || "https://api.nhdeservesbette
       <h1>Find out who represents you.</h1>
 
       <p class="intro">
-        Enter your address to find your New Hampshire representatives, see key votes,
-        and get clear ways to take action.
+        Enter your full address to find your New Hampshire state senator and state representatives.
       </p>
 
       <form id="rep-form" class="lookup-card card">
-        <label for="address">Your Town/City</label>
+        <label for="address">Your full address</label>
 
         <div class="form-row">
           <input
             id="address"
             name="address"
             type="text"
-            placeholder="<Manchester>"
+            placeholder="123 Main St, Manchester, NH"
+            autocomplete="street-address"
             required
           />
 
@@ -35,15 +35,29 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE || "https://api.nhdeservesbette
         </div>
 
         <p class="help-text">
-          Your address is only used to look up your representatives.
+          Your address is only used to identify your districts.
         </p>
       </form>
 
       <div id="status" class="status-message" aria-live="polite"></div>
 
+      <section id="district-summary" class="district-summary card" hidden>
+        <h2>Districts found</h2>
+        <div id="district-list"></div>
+      </section>
+
       <section id="results" class="results" hidden>
         <h2>Your Representatives</h2>
-        <div id="rep-list" class="rep-grid"></div>
+
+        <div id="senate-section" class="rep-section" hidden>
+          <h3>State Senate</h3>
+          <div id="senate-list" class="rep-grid"></div>
+        </div>
+
+        <div id="house-section" class="rep-section" hidden>
+          <h3>State House</h3>
+          <div id="house-list" class="rep-grid"></div>
+        </div>
       </section>
     </div>
   </section>
@@ -52,8 +66,186 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE || "https://api.nhdeservesbette
     const form = document.querySelector("#rep-form");
     const addressInput = document.querySelector("#address");
     const statusEl = document.querySelector("#status");
+
+    const districtSummaryEl = document.querySelector("#district-summary");
+    const districtListEl = document.querySelector("#district-list");
+
     const resultsEl = document.querySelector("#results");
-    const repListEl = document.querySelector("#rep-list");
+    const senateSectionEl = document.querySelector("#senate-section");
+    const houseSectionEl = document.querySelector("#house-section");
+    const senateListEl = document.querySelector("#senate-list");
+    const houseListEl = document.querySelector("#house-list");
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function safeHref(value) {
+      return String(value || "").replace(/"/g, "%22");
+    }
+
+    function getInitials(name) {
+      return String(name || "NH")
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase() || "NH";
+    }
+
+    function renderDistrictSummary(data) {
+      const civic = data.civic || {};
+      const normalized = data.normalizedInput || null;
+
+      const addressLine = normalized
+        ? [normalized.line1, normalized.city, normalized.state, normalized.zip]
+            .filter(Boolean)
+            .join(", ")
+        : "";
+
+      const parts = [];
+
+      if (addressLine) {
+        parts.push(`
+          <div class="district-row">
+            <span>Address</span>
+            <strong>${escapeHtml(addressLine)}</strong>
+          </div>
+        `);
+      }
+
+      if (civic.senate?.districtLabel || civic.senate?.district) {
+        parts.push(`
+          <div class="district-row">
+            <span>State Senate District</span>
+            <strong>${escapeHtml(civic.senate.districtLabel || civic.senate.district)}</strong>
+          </div>
+        `);
+      }
+
+      if (civic.house?.districtLabel || civic.house?.district) {
+        parts.push(`
+          <div class="district-row">
+            <span>State House District</span>
+            <strong>${escapeHtml(civic.house.districtLabel || civic.house.district)}</strong>
+          </div>
+        `);
+      }
+
+      if (civic.place?.name) {
+        parts.push(`
+          <div class="district-row">
+            <span>City/Town</span>
+            <strong>${escapeHtml(civic.place.name)}</strong>
+          </div>
+        `);
+      }
+
+      if (civic.ward?.number) {
+        parts.push(`
+          <div class="district-row">
+            <span>Ward</span>
+            <strong>${escapeHtml(civic.ward.number)}</strong>
+          </div>
+        `);
+      }
+
+      if (!parts.length) {
+        districtSummaryEl.hidden = true;
+        districtListEl.innerHTML = "";
+        return;
+      }
+
+      districtListEl.innerHTML = parts.join("");
+      districtSummaryEl.hidden = false;
+    }
+
+    function renderRepCard(rep) {
+      const name = rep.name || `${rep.firstname || ""} ${rep.lastname || ""}`.trim();
+      const chamber = rep.chamber || "";
+      const party = rep.party || "";
+      const district = rep.district || rep.raw_district || "";
+      const location = rep.location_text || "";
+      const email = rep.email || "";
+      const phone = rep.phone || "";
+      const photo = rep.photo || "";
+      const notes = rep.notes || "";
+
+      return `
+        <article class="rep-card card">
+          <div class="rep-header">
+            ${
+              photo
+                ? `<img src="${safeHref(photo)}" alt="Photo of ${escapeHtml(name)}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='grid';" />
+                   <div class="photo-placeholder is-hidden">${escapeHtml(getInitials(name))}</div>`
+                : `<div class="photo-placeholder">${escapeHtml(getInitials(name))}</div>`
+            }
+
+            <div>
+              <h4>${escapeHtml(name)}</h4>
+              <p>${escapeHtml(chamber)}</p>
+            </div>
+          </div>
+
+          <div class="rep-meta">
+            ${party ? `<span>${escapeHtml(party)}</span>` : ""}
+            ${district ? `<span>${escapeHtml(district)}</span>` : ""}
+          </div>
+
+          <dl>
+            <div>
+              <dt>Represents</dt>
+              <dd>${location ? escapeHtml(location) : "Not available"}</dd>
+            </div>
+
+            <div>
+              <dt>Email</dt>
+              <dd>
+                ${
+                  email
+                    ? `<a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a>`
+                    : "Not available"
+                }
+              </dd>
+            </div>
+
+            <div>
+              <dt>Phone</dt>
+              <dd>
+                ${
+                  phone
+                    ? `<a href="tel:${escapeHtml(phone)}">${escapeHtml(phone)}</a>`
+                    : "Not available"
+                }
+              </dd>
+            </div>
+          </dl>
+
+          ${
+            notes
+              ? `<div class="notes">${escapeHtml(notes)}</div>`
+              : ""
+          }
+        </article>
+      `;
+    }
+
+    function renderRepGroup(sectionEl, listEl, reps) {
+      if (!reps || reps.length === 0) {
+        sectionEl.hidden = true;
+        listEl.innerHTML = "";
+        return;
+      }
+
+      listEl.innerHTML = reps.map(renderRepCard).join("");
+      sectionEl.hidden = false;
+    }
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -61,18 +253,27 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE || "https://api.nhdeservesbette
       const address = addressInput.value.trim();
 
       if (!address) {
-        statusEl.textContent = "Please enter an address.";
+        statusEl.textContent = "Please enter your full address.";
         return;
       }
 
-      statusEl.textContent = "Looking up your representatives...";
+      statusEl.textContent = "Looking up your districts and representatives...";
       resultsEl.hidden = true;
-      repListEl.innerHTML = "";
+      districtSummaryEl.hidden = true;
+      senateSectionEl.hidden = true;
+      houseSectionEl.hidden = true;
+      senateListEl.innerHTML = "";
+      houseListEl.innerHTML = "";
+      districtListEl.innerHTML = "";
 
       try {
-        const response = await fetch(
-          `${API_BASE}/reps/lookup?town=${encodeURIComponent(address)}`
-        );
+        const response = await fetch(`${API_BASE}/reps/lookup`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ address }),
+        });
 
         const data = await response.json();
 
@@ -80,82 +281,25 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE || "https://api.nhdeservesbette
           throw new Error(data.error || "Something went wrong.");
         }
 
-        if (!data.representatives || data.representatives.length === 0) {
-          statusEl.textContent = "No representatives found for that address.";
+        const senate = data.groups?.senate || [];
+        const house = data.groups?.house || [];
+        const allReps = data.representatives || [];
+
+        if (!allReps.length) {
+          statusEl.textContent =
+            "We found your districts, but no matching legislators were found in the local database yet.";
+          renderDistrictSummary(data);
           return;
         }
 
         statusEl.textContent = "";
+        renderDistrictSummary(data);
+        renderRepGroup(senateSectionEl, senateListEl, senate);
+        renderRepGroup(houseSectionEl, houseListEl, house);
         resultsEl.hidden = false;
-
-        repListEl.innerHTML = data.representatives
-          .map((rep) => {
-            return `
-              <article class="rep-card card">
-                <div class="rep-header">
-                  ${
-                    rep.photo
-                      ? `<img src="${rep.photo}" alt="${rep.name}" />`
-                      : `<div class="photo-placeholder">NH</div>`
-                  }
-
-                  <div>
-                    <h3>${rep.name}</h3>
-                    <p>${rep.role}</p>
-                  </div>
-                </div>
-
-                <dl>
-                  <div>
-                    <dt>District</dt>
-                    <dd>${rep.district || "Not available"}</dd>
-                  </div>
-
-                  <div>
-                    <dt>Party</dt>
-                    <dd>${rep.party || "Not available"}</dd>
-                  </div>
-
-                  <div>
-                    <dt>Email</dt>
-                    <dd>
-                      ${
-                        rep.email
-                          ? `<a href="mailto:${rep.email}">${rep.email}</a>`
-                          : "Not available"
-                      }
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt>Phone</dt>
-                    <dd>
-                      ${
-                        rep.phone
-                          ? `<a href="tel:${rep.phone}">${rep.phone}</a>`
-                          : "Not available"
-                      }
-                    </dd>
-                  </div>
-                </dl>
-
-                ${
-                  rep.score
-                    ? `<div class="score">Accountability Score: ${rep.score}</div>`
-                    : ""
-                }
-
-                ${
-                  rep.url
-                    ? `<a class="rep-link" href="${rep.url}" target="_blank" rel="noopener">View official page →</a>`
-                    : ""
-                }
-              </article>
-            `;
-          })
-          .join("");
       } catch (error) {
-        statusEl.textContent = error.message || "Unable to look up representatives.";
+        statusEl.textContent =
+          error.message || "Unable to look up representatives.";
       }
     });
   </script>
@@ -235,8 +379,45 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE || "https://api.nhdeservesbette
     font-weight: 800;
   }
 
+  .district-summary {
+    margin-top: 2rem;
+  }
+
+  .district-summary h2,
+  .results h2,
+  .rep-section h3 {
+    margin-top: 0;
+  }
+
+  #district-list {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .district-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.75rem;
+  }
+
+  .district-row:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .district-row span {
+    color: var(--muted);
+    font-weight: 800;
+  }
+
   .results {
     margin-top: 3rem;
+  }
+
+  .rep-section {
+    margin-top: 2rem;
   }
 
   .rep-grid {
@@ -258,8 +439,8 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE || "https://api.nhdeservesbette
 
   .rep-header img,
   .photo-placeholder {
-    width: 72px;
-    height: 72px;
+    width: 78px;
+    height: 78px;
     border-radius: 999px;
     object-fit: cover;
     background: var(--accent);
@@ -269,7 +450,11 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE || "https://api.nhdeservesbette
     font-weight: 900;
   }
 
-  .rep-header h3 {
+  .photo-placeholder.is-hidden {
+    display: none;
+  }
+
+  .rep-header h4 {
     margin: 0;
     font-size: 1.35rem;
   }
@@ -277,6 +462,22 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE || "https://api.nhdeservesbette
   .rep-header p {
     margin: 0;
     color: var(--muted);
+  }
+
+  .rep-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .rep-meta span {
+    background: #f3f4ff;
+    color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.85rem;
+    font-weight: 900;
   }
 
   dl {
@@ -298,26 +499,21 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE || "https://api.nhdeservesbette
 
   dd {
     margin: 0;
+    overflow-wrap: anywhere;
   }
 
-  .score {
+  .notes {
     background: #fef3c7;
     color: #92400e;
-    border-radius: 999px;
-    padding: 0.4rem 0.75rem;
-    font-weight: 900;
-    width: fit-content;
-  }
-
-  .rep-link {
-    font-weight: 900;
-    color: var(--accent);
-    text-decoration: none;
+    border-radius: 1rem;
+    padding: 0.75rem;
+    font-weight: 700;
   }
 
   @media (max-width: 800px) {
     .rep-grid,
-    .form-row {
+    .form-row,
+    .district-row {
       grid-template-columns: 1fr;
     }
 
